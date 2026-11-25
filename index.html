@@ -57,6 +57,42 @@
   .qedit{border:1px solid var(--line);border-radius:12px;padding:14px;margin:12px 0;background:#fafbfd}
   .qedit .o{display:flex;gap:8px;align-items:center;margin:6px 0}
   .qedit .o input[type=radio]{width:auto}
+  .badge{display:inline-block;font-size:12px;font-weight:700;padding:2px 8px;border-radius:12px;background:#eef2f8;color:var(--muted);margin-left:6px;vertical-align:middle}
+  .badge.game{background:#fff1d6;color:#a35b00}
+  /* ===== Білгір баспалдағы ===== */
+  #scrGame,#scrGameOver{background:radial-gradient(circle at 30% 0%,#1d3f8f,#0a1a44 70%);color:#fff}
+  #scrGame h2,#scrGameOver h2{color:#ffd166}
+  .game{display:grid;grid-template-columns:1fr 230px;gap:22px}
+  .gtop{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+  .timer{width:62px;height:62px;border-radius:50%;border:4px solid #ffd166;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:800}
+  .timer.low{border-color:#ff5a5f;color:#ff5a5f;animation:pulse .6s infinite alternate}
+  @keyframes pulse{to{transform:scale(1.08)}}
+  .lls{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 16px}
+  .ll{margin:0;background:rgba(255,255,255,.1);border:2px solid #ffd166;color:#fff;border-radius:30px;padding:8px 14px;font-size:14px}
+  .ll:hover{background:rgba(255,209,102,.25)}
+  .ll:disabled{opacity:.3;cursor:not-allowed;text-decoration:line-through}
+  .ll.armed{background:#ffd166;color:#0a1a44}
+  .gq{background:linear-gradient(90deg,#122a66,#1b3c8c,#122a66);border:2px solid #4f7bd9;border-radius:40px;padding:18px 26px;font-size:20px;font-weight:600;text-align:center;margin-bottom:16px}
+  .gopts{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .gopt{margin:0;text-align:left;background:#122a66;border:2px solid #4f7bd9;border-radius:30px;padding:13px 18px;font-size:17px;color:#fff;transition:.15s}
+  .gopt i{font-style:normal;color:#ffd166;font-weight:800;margin-right:8px}
+  .gopt:hover:not(:disabled){background:#1d4bb0}
+  .gopt.picked{background:#e09f00;border-color:#ffd166}
+  .gopt.right{background:#1f9d55 !important;border-color:#7ee2a8 !important;animation:blink .25s 4 alternate}
+  .gopt.wrong{background:#c0392b !important;border-color:#ff9a8f !important}
+  .gopt.gone{visibility:hidden}
+  .gopt:disabled{cursor:default}
+  @keyframes blink{to{filter:brightness(1.4)}}
+  .ghint{min-height:24px;margin:14px 0 4px;color:#ffd166;font-weight:600}
+  .ladder{list-style:none;margin:0;padding:10px;background:rgba(0,0,0,.25);border-radius:14px;font-size:15px}
+  .ladder li{display:flex;justify-content:space-between;padding:4px 10px;border-radius:8px;color:#9fb3e0}
+  .ladder li.safe{color:#fff;font-weight:800}
+  .ladder li.done{color:#7ee2a8}
+  .ladder li.cur{background:#ffd166;color:#0a1a44;font-weight:800}
+  #scrGame button.ghost,#scrGameOver button.ghost{background:rgba(255,255,255,.12);color:#fff}
+  .gover{text-align:center;padding:10px}
+  .gover .big{color:#ffd166}
+  @media(max-width:720px){.game{grid-template-columns:1fr}.gopts{grid-template-columns:1fr}.ladder{display:flex;flex-wrap:wrap;gap:4px}.ladder li{padding:2px 8px}.ladder li b{display:none}}
   .hidden{display:none !important}
 </style>
 </head>
@@ -129,10 +165,39 @@
     <button onclick="studentHome()">Тесттер тізіміне</button>
   </section>
 
+  <!-- ============ ОЙЫН: Білгір баспалдағы ============ -->
+  <section id="scrGame" class="card hidden">
+    <div class="game">
+      <div>
+        <div class="gtop"><h2 id="gTitle" style="margin:0"></h2><div class="timer" id="gTimer">30</div></div>
+        <div class="lls">
+          <button class="ll" id="ll5050" onclick="useLL('5050')">50 : 50</button>
+          <button class="ll" id="llHint" onclick="useLL('hint')">💡 Ұстаз кеңесі</button>
+          <button class="ll" id="llSecond" onclick="useLL('second')">🔁 Тағы бір мүмкіндік</button>
+        </div>
+        <div class="gq" id="gQ"></div>
+        <div class="gopts" id="gOpts"></div>
+        <div class="ghint" id="gHint"></div>
+        <button class="ghost" id="gStop" onclick="stopGame()">✋ Тоқтап, ұпайды алу</button>
+      </div>
+      <ol class="ladder" id="gLadder"></ol>
+    </div>
+  </section>
+
+  <section id="scrGameOver" class="card hidden">
+    <div class="gover">
+      <h2 id="goTitle"></h2>
+      <div class="big" id="goPoints"></div>
+      <p id="goText"></p>
+      <button onclick="studentHome()">Басты бетке</button>
+    </div>
+  </section>
+
   <!-- ============ МҰҒАЛІМ ============ -->
   <section id="scrTeacher" class="card hidden">
     <div class="tabs">
       <div class="tab on" id="tTabRes" onclick="teacherTab('res')">📊 Нәтижелер</div>
+      <div class="tab" id="tTabGame" onclick="teacherTab('game')">🪜 Ойын нәтижелері</div>
       <div class="tab" id="tTabTests" onclick="teacherTab('tests')">📝 Тесттер</div>
       <div class="tab" id="tTabNew" onclick="teacherTab('new')">➕ Жаңа тест</div>
     </div>
@@ -154,12 +219,30 @@
       <div id="detail"></div>
     </div>
 
+    <!-- Ойын нәтижелері -->
+    <div id="paneGame" class="hidden">
+      <div class="row">
+        <div style="flex:1;min-width:130px"><label>Сынып</label><select id="gfClass" onchange="renderGameResults()"></select></div>
+        <div style="flex:2;min-width:160px"><label>Ойын</label><select id="gfTest" onchange="renderGameResults()"></select></div>
+      </div>
+      <div class="row"><button class="ghost" onclick="loadTeacher()">🔄 Жаңарту</button></div>
+      <div class="stats" id="gStats"></div>
+      <div class="tablewrap"><table id="gTbl"></table></div>
+      <p class="muted">🔁 батырмасы — оқушыға ойынды қайта ойнауға рұқсат береді.</p>
+    </div>
+
     <!-- Тесттер -->
     <div id="paneTests" class="hidden"><div id="testsList"></div></div>
 
     <!-- Жаңа тест -->
     <div id="paneNew" class="hidden">
-      <label>Тест атауы</label>
+      <label>Түрі</label>
+      <select id="ntKind" onchange="ntKindChanged()">
+        <option value="test">📝 Тест (барлық сұрақ бір бетте)</option>
+        <option value="ladder">🪜 Білгір баспалдағы — ойын (5–15 сұрақ, жеңілден қиынға)</option>
+      </select>
+      <p class="muted" id="ntKindInfo"></p>
+      <label>Атауы</label>
       <input id="ntTitle" placeholder="Мысалы: 6-сынып. Сөз таптары">
       <div id="ntQs"></div>
       <div class="row">
@@ -180,6 +263,9 @@ const SUPABASE_KEY = "sb_publishable_nfyBNQEACXV5Tcw3ivCmjQ_O6AkODoi"; // publis
 
 const CLASSES = ["5 А","5 Ә","5 Б","6 А","6 Ә","6 Б","7 А","7 Ә","7 Б","8 А","8 Ә","8 Б"];
 const EMAIL_DOMAIN = "kaztest.app"; // ішкі техникалық домен, өзгертпеңіз
+// Білгір баспалдағының ұпайлары (төменнен жоғары)
+const POINTS = [10, 20, 30, 50, 100, 150, 200, 300, 400, 500, 700, 1000, 1500, 2000, 3000];
+const Q_SECONDS = 30;
 /* ========================================================= */
 
 const $ = id => document.getElementById(id);
@@ -188,6 +274,7 @@ const grade = p => p >= 85 ? 5 : p >= 65 ? 4 : p >= 40 ? 3 : 2;
 const fmtDate = d => new Date(d).toLocaleString("ru-RU", {day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"});
 const normLogin = l => String(l || "").trim().toLowerCase().replace(/\s+/g, "");
 // Логинді (кирилл болса да) email-ге айналдыру: UTF-8 байттарының hex коды
+const uniq = a => [...new Set(a)].filter(Boolean).sort((a,b) => a.localeCompare(b, "kk"));
 const loginToEmail = l => "u" + [...new TextEncoder().encode(normLogin(l))].map(b => b.toString(16).padStart(2, "0")).join("") + "@" + EMAIL_DOMAIN;
 
 function show(id){
@@ -207,8 +294,8 @@ function errText(e){
   return m;
 }
 
-let sb = null, me = null, tests = [], myResults = [], current = null;
-let tRows = [], tTests = [], tKeys = {};
+let sb = null, me = null, tests = [], myResults = [], myRuns = [], current = null, game = null;
+let tRows = [], tTests = [], tKeys = {}, gRows = [];
 
 /* ======================= ІСКЕ ҚОСУ ======================= */
 (async function init(){
@@ -279,7 +366,7 @@ async function afterLogin(){
   me = data;
   $("who").classList.remove("hidden");
   $("whoName").textContent = (me.role === "teacher" ? "👩‍🏫 " : "🎒 ") + me.full_name + (me.role === "student" ? " · " + me.class : "");
-  if (me.role === "teacher"){ show("scrTeacher"); loadTeacher(); if (!$("ntQs").children.length) addQ(); }
+  if (me.role === "teacher"){ show("scrTeacher"); loadTeacher(); ntKindChanged(); if (!$("ntQs").children.length) addQ(); }
   else studentHome();
 }
 
@@ -287,14 +374,26 @@ async function afterLogin(){
 async function studentHome(){
   show("scrStudent");
   $("stList").innerHTML = `<p class="muted">Жүктелуде...</p>`;
-  const [t, r] = await Promise.all([
-    sb.from("tests").select("id,title,questions").eq("active", true).order("id"),
-    sb.from("results").select("test_id,score,total,percent,created_at").eq("user_id", me.id)
+  const [t, r, g] = await Promise.all([
+    sb.from("tests").select("id,title,questions,kind").eq("active", true).order("id"),
+    sb.from("results").select("test_id,score,total,percent,created_at").eq("user_id", me.id),
+    sb.from("ladder_runs").select("test_id,status,step,final_step,total,finished_at").eq("user_id", me.id)
   ]);
-  if (t.error || r.error){ $("stList").innerHTML = `<p class="err">${esc(errText(t.error || r.error))}</p>`; return; }
-  tests = t.data; myResults = r.data;
+  const err = t.error || r.error || g.error;
+  if (err){ $("stList").innerHTML = `<p class="err">${esc(errText(err))}</p>`; return; }
+  tests = t.data; myResults = r.data; myRuns = g.data;
   if (!tests.length){ $("stList").innerHTML = `<p class="muted">Әзірге ашық тест жоқ.</p>`; return; }
   $("stList").innerHTML = tests.map(ts => {
+    if (ts.kind === "ladder"){
+      const run = myRuns.find(x => x.test_id === ts.id);
+      const done = run && run.status !== "playing";
+      return `<div class="testcard">
+        <div><h3>🪜 ${esc(ts.title)} <span class="badge game">ОЙЫН</span></h3><span class="muted">${ts.questions.length} саты · әр сұраққа ${Q_SECONDS} секунд · 3 көмек</span></div>
+        ${done
+          ? `<div>Ойналды: <b>${run.final_step}/${run.total} саты</b> · <b>${pts(run.final_step)} ұпай</b> ${run.status === "won" ? "🏆" : ""}<br><span class="muted">${fmtDate(run.finished_at)}</span></div>`
+          : `<button class="sm" style="padding:9px 16px" onclick="startGame(${ts.id})">${run ? "▶ Жалғастыру" : "🎮 Ойнау"}</button>`}
+      </div>`;
+    }
     const res = myResults.find(x => x.test_id === ts.id);
     return `<div class="testcard">
       <div><h3>${esc(ts.title)}</h3><span class="muted">${ts.questions.length} сұрақ</span></div>
@@ -347,9 +446,129 @@ function reviewHTML(questions, answers, key){
     </div>`).join("");
 }
 
+/* ======================= БІЛГІР БАСПАЛДАҒЫ ======================= */
+const LETTERS = ["А", "Ә", "Б", "В", "Г", "Д"];
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const pts = s => s > 0 ? POINTS[s - 1] : 0;
+const safeSteps = n => [Math.round(n / 3), Math.round(n * 2 / 3)];
+const optBtn = j => $("gOpts").querySelector(`[data-j="${j}"]`);
+
+async function startGame(id){
+  const t = tests.find(x => x.id === id);
+  const { data, error } = await sb.rpc("ladder_start", { p_test_id: id });
+  if (error) return alert(errText(error));
+  game = { ...data, test: t, locked: false, tid: null };
+  $("gTitle").textContent = "🪜 " + t.title;
+  show("scrGame");
+  renderGame(Math.max(0, Q_SECONDS - (data.elapsed || 0)));
+}
+
+function renderLadder(){
+  const n = game.total, safe = safeSteps(n);
+  let html = "";
+  for (let s = n; s >= 1; s--){
+    let cls = s === game.step + 1 ? "cur" : (s <= game.step ? "done" : "");
+    if (safe.includes(s)) cls += " safe";
+    html += `<li class="${cls}"><span>${s}${safe.includes(s) ? " 🔒" : ""}</span><b>${POINTS[s - 1]}</b></li>`;
+  }
+  $("gLadder").innerHTML = html;
+}
+
+function updateLL(){
+  $("ll5050").disabled = game.used_5050;
+  $("llHint").disabled = game.used_hint;
+  $("llSecond").disabled = game.used_second && !game.second_armed;
+  $("llSecond").classList.toggle("armed", !!game.second_armed);
+}
+
+function renderGame(seconds){
+  const q = game.test.questions[game.step];
+  game.locked = false;
+  $("gHint").textContent = game.second_armed ? "🔁 Бұл сұрақта қателессеңіз, қайта таңдай аласыз." : "";
+  $("gQ").textContent = `${game.step + 1}-сұрақ. ${q.q}`;
+  $("gOpts").innerHTML = q.options.map((o, j) =>
+    `<button class="gopt" data-j="${j}" onclick="answer(${j})"><i>${LETTERS[j]}:</i>${esc(o)}</button>`).join("");
+  $("gStop").textContent = `✋ Тоқтап, ${pts(game.step)} ұпайды алу`;
+  renderLadder(); updateLL();
+  startTimer(seconds ?? Q_SECONDS);
+}
+
+function startTimer(sec){
+  clearInterval(game.tid);
+  game.left = sec;
+  const draw = () => { $("gTimer").textContent = game.left; $("gTimer").classList.toggle("low", game.left <= 5); };
+  draw();
+  game.tid = setInterval(() => {
+    game.left--; draw();
+    if (game.left <= 0){ clearInterval(game.tid); answer(-1); }
+  }, 1000);
+}
+
+async function answer(j){
+  if (game.locked) return;
+  game.locked = true; clearInterval(game.tid);
+  const btn = j >= 0 ? optBtn(j) : null;
+  if (btn) btn.classList.add("picked");
+  else $("gHint").textContent = "⏰ Уақыт бітті!";
+  const { data, error } = await sb.rpc("ladder_answer", { p_run_id: game.run_id, p_choice: j });
+  if (error){ alert(errText(error)); return studentHome(); }
+  await sleep(900);
+  if (data.correct){
+    btn.classList.remove("picked"); btn.classList.add("right");
+    game.step = data.step; game.second_armed = false;
+    await sleep(1300);
+    if (data.status === "won") return gameOver(data);
+    return renderGame();
+  }
+  if (data.retry){
+    game.second_armed = false; updateLL();
+    if (btn){ btn.classList.remove("picked"); btn.classList.add("wrong"); btn.disabled = true; }
+    $("gHint").textContent = "❌ Қате! Бірақ «Тағы бір мүмкіндік» көмегі бар — қайта таңдаңыз.";
+    game.locked = false;
+    return startTimer(Q_SECONDS);
+  }
+  if (btn){ btn.classList.remove("picked"); btn.classList.add("wrong"); }
+  const rb = optBtn(data.correct_index); if (rb){ rb.classList.remove("gone"); rb.classList.add("right"); }
+  await sleep(2200);
+  gameOver(data);
+}
+
+async function useLL(kind){
+  if (game.locked) return;
+  const { data, error } = await sb.rpc("ladder_lifeline", { p_run_id: game.run_id, p_kind: kind });
+  if (error) return alert(errText(error));
+  if (kind === "5050"){ game.used_5050 = true; (data.remove || []).forEach(j => { const b = optBtn(j); if (b){ b.disabled = true; b.classList.add("gone"); } }); }
+  if (kind === "hint"){ game.used_hint = true; $("gHint").textContent = "💡 Ұстаз кеңесі: " + data.hint; }
+  if (kind === "second"){ game.used_second = true; game.second_armed = true; $("gHint").textContent = "🔁 Бұл сұрақта қателессеңіз, қайта таңдай аласыз."; }
+  updateLL();
+}
+
+async function stopGame(){
+  if (game.locked) return;
+  if (!confirm(`Ойынды тоқтатып, ${pts(game.step)} ұпайды аласыз ба?`)) return;
+  game.locked = true; clearInterval(game.tid);
+  const { data, error } = await sb.rpc("ladder_stop", { p_run_id: game.run_id });
+  if (error){ alert(errText(error)); return studentHome(); }
+  const rb = optBtn(data.correct_index); if (rb) rb.classList.add("right");
+  await sleep(1500);
+  gameOver(data);
+}
+
+function gameOver(d){
+  clearInterval(game.tid);
+  const s = d.final_step, n = game.total;
+  const titles = { won: "🏆 Құттықтаймыз! Сіз — нағыз Білгірсіз!", lost: "Ойын аяқталды", stopped: "✋ Ойынды тоқтаттыңыз" };
+  $("goTitle").textContent = titles[d.status] || "Ойын аяқталды";
+  $("goPoints").textContent = `${pts(s)} ұпай`;
+  let txt = `Жеткен сатыңыз: ${s} / ${n}.`;
+  if (d.status === "lost") txt = `Сіз ${d.step}-сатыға дейін жеттіңіз. ` + (s > 0 ? `Бекітілген ${s}-сатыдағы ұпай сақталды.` : "Бекітілген сатыға жетпей қалдыңыз.");
+  $("goText").textContent = txt + " Нәтижеңіз мұғалімге жіберілді ✅";
+  show("scrGameOver");
+}
+
 /* ======================= МҰҒАЛІМ ======================= */
 function teacherTab(t){
-  [["res","tTabRes","paneRes"],["tests","tTabTests","paneTests"],["new","tTabNew","paneNew"]].forEach(([k,tab,pane]) => {
+  [["res","tTabRes","paneRes"],["game","tTabGame","paneGame"],["tests","tTabTests","paneTests"],["new","tTabNew","paneNew"]].forEach(([k,tab,pane]) => {
     $(tab).classList.toggle("on", k === t);
     $(pane).classList.toggle("hidden", k !== t);
   });
@@ -357,23 +576,29 @@ function teacherTab(t){
 
 async function loadTeacher(){
   $("tbl").innerHTML = `<tr><td class="muted">Жүктелуде...</td></tr>`;
-  const [r, t, k] = await Promise.all([
+  const [r, t, k, g] = await Promise.all([
     sb.from("results").select("id,score,total,percent,answers,created_at,test_id,user_id,profiles(full_name,class,login)").order("created_at", { ascending: false }),
     sb.from("tests").select("*").order("id"),
-    sb.from("test_keys").select("*")
+    sb.from("test_keys").select("*"),
+    sb.from("ladder_runs").select("*,profiles(full_name,class,login)").order("created_at", { ascending: false })
   ]);
-  const err = r.error || t.error || k.error;
+  const err = r.error || t.error || k.error || g.error;
   if (err){ $("tbl").innerHTML = `<tr><td class="err">${esc(errText(err))}</td></tr>`; return; }
   tTests = t.data;
   tKeys = Object.fromEntries(k.data.map(x => [x.test_id, x.answers]));
   tRows = r.data.map(x => ({ ...x, name: x.profiles?.full_name || "?", cls: x.profiles?.class || "", login: x.profiles?.login || "",
                              testTitle: (tTests.find(tt => tt.id === x.test_id) || {}).title || "?" }));
-  const uniq = a => [...new Set(a)].filter(Boolean).sort((a,b) => a.localeCompare(b, "kk"));
   const keepC = $("fClass").value, keepT = $("fTest").value;
   $("fClass").innerHTML = `<option value="">Барлығы</option>` + uniq(tRows.map(x => x.cls)).map(c => `<option>${esc(c)}</option>`).join("");
-  $("fTest").innerHTML  = `<option value="">Барлығы</option>` + tTests.map(x => `<option value="${x.id}">${esc(x.title)}</option>`).join("");
+  $("fTest").innerHTML  = `<option value="">Барлығы</option>` + tTests.filter(x => x.kind !== "ladder").map(x => `<option value="${x.id}">${esc(x.title)}</option>`).join("");
   $("fClass").value = keepC; $("fTest").value = keepT;
-  renderResults(); renderTests();
+  gRows = g.data.map(x => ({ ...x, name: x.profiles?.full_name || "?", cls: x.profiles?.class || "",
+                             title: (tTests.find(tt => tt.id === x.test_id) || {}).title || "?" }));
+  const keepGC = $("gfClass").value, keepGT = $("gfTest").value;
+  $("gfClass").innerHTML = `<option value="">Барлығы</option>` + uniq(gRows.map(x => x.cls)).map(c => `<option>${esc(c)}</option>`).join("");
+  $("gfTest").innerHTML  = `<option value="">Барлығы</option>` + tTests.filter(x => x.kind === "ladder").map(x => `<option value="${x.id}">${esc(x.title)}</option>`).join("");
+  $("gfClass").value = keepGC; $("gfTest").value = keepGT;
+  renderResults(); renderGameResults(); renderTests();
 }
 
 function filtered(){
@@ -399,6 +624,37 @@ function renderResults(){
         <td><span class="pill p${grade(x.percent)}">${grade(x.percent)}</span></td>
         <td>${fmtDate(x.created_at)}</td>
       </tr>`).join("") : `<tr><td colspan="7" class="muted">Нәтиже жоқ</td></tr>`);
+}
+
+function renderGameResults(){
+  const c = $("gfClass").value, t = $("gfTest").value;
+  const rows = gRows.filter(x => (!c || x.cls === c) && (!t || String(x.test_id) === t));
+  const fin = rows.filter(x => x.status !== "playing");
+  const avg = fin.length ? Math.round(fin.reduce((s,x) => s + pts(x.final_step), 0) / fin.length) : 0;
+  $("gStats").innerHTML = `
+    <div class="stat"><span class="muted">Ойнағандар</span><b>${rows.length}</b></div>
+    <div class="stat"><span class="muted">🏆 Соңына жеткендер</span><b>${rows.filter(x => x.status === "won").length}</b></div>
+    <div class="stat"><span class="muted">Орташа ұпай</span><b>${avg}</b></div>
+    <div class="stat"><span class="muted">Ойнап жатыр</span><b>${rows.filter(x => x.status === "playing").length}</b></div>`;
+  const st = { won: "🏆 Жеңді", lost: "❌ Қателесті", stopped: "✋ Тоқтады", playing: "⏳ Ойнап жатыр" };
+  const sorted = [...rows].sort((a,b) => b.final_step - a.final_step || new Date(a.finished_at) - new Date(b.finished_at));
+  $("gTbl").innerHTML = `<tr><th>#</th><th>Аты-жөні</th><th>Сынып</th><th>Ойын</th><th>Саты</th><th>Ұпай</th><th>Нәтиже</th><th>Көмектер</th><th>Күні</th><th></th></tr>` +
+    (sorted.length ? sorted.map((x,i) => `<tr>
+      <td>${i+1}</td><td>${esc(x.name)}</td><td>${esc(x.cls)}</td><td>${esc(x.title)}</td>
+      <td>${x.status === "playing" ? x.step : x.final_step}/${x.total}</td>
+      <td><b>${x.status === "playing" ? "—" : pts(x.final_step)}</b></td>
+      <td>${st[x.status] || x.status}</td>
+      <td>${[x.used_5050 ? "50:50" : "", x.used_hint ? "💡" : "", x.used_second ? "🔁" : ""].filter(Boolean).join(" ") || "—"}</td>
+      <td>${fmtDate(x.finished_at || x.created_at)}</td>
+      <td><button class="sm danger" title="Қайта ойнауға рұқсат беру" onclick="resetRun(${x.id})">🔁</button></td>
+    </tr>`).join("") : `<tr><td colspan="10" class="muted">Әзірге ешкім ойнамады</td></tr>`);
+}
+
+async function resetRun(id){
+  if (!confirm("Бұл нәтиже өшіріледі, оқушы ойынды қайтадан ойнай алады. Жалғастырасыз ба?")) return;
+  const { error } = await sb.from("ladder_runs").delete().eq("id", id);
+  if (error) return alert(errText(error));
+  loadTeacher();
 }
 
 function showDetail(id){
@@ -433,9 +689,9 @@ function downloadCSV(){
 /* ---------- Тесттер тізімі ---------- */
 function renderTests(){
   $("testsList").innerHTML = tTests.length ? tTests.map(t => {
-    const n = tRows.filter(r => r.test_id === t.id).length;
+    const n = (t.kind === "ladder" ? gRows : tRows).filter(r => r.test_id === t.id).length;
     return `<div class="testcard">
-      <div><h3>${esc(t.title)}</h3><span class="muted">${t.questions.length} сұрақ · ${n} оқушы тапсырды · ${t.active ? "🟢 Ашық" : "⚪ Жабық"}</span></div>
+      <div><h3>${t.kind === "ladder" ? "🪜 " : ""}${esc(t.title)} ${t.kind === "ladder" ? '<span class="badge game">ОЙЫН</span>' : '<span class="badge">ТЕСТ</span>'}</h3><span class="muted">${t.questions.length} сұрақ · ${n} оқушы · ${t.active ? "🟢 Ашық" : "⚪ Жабық"}</span></div>
       <div class="row">
         <button class="sm ghost" onclick="toggleTest(${t.id}, ${!t.active})">${t.active ? "Жабу" : "Ашу"}</button>
         <button class="sm danger" onclick="deleteTest(${t.id})">Өшіру</button>
@@ -468,8 +724,16 @@ function addQ(){
       <button class="sm danger" onclick="this.closest('.qedit').remove();renumber()">✕ Өшіру</button></div>
     <label>Сұрақ</label><input class="qt" placeholder="Сұрақ мәтіні">
     <label>Жауап нұсқалары <span class="muted">(дұрысын белгілеңіз ●)</span></label>
-    ${[0,1,2,3].map(j => `<div class="o"><input type="radio" name="c${id}" value="${j}"><input class="ot" placeholder="${j+1}-нұсқа"></div>`).join("")}`;
+    ${[0,1,2,3].map(j => `<div class="o"><input type="radio" name="c${id}" value="${j}"><input class="ot" placeholder="${j+1}-нұсқа"></div>`).join("")}
+    <div class="qhwrap ${$("ntKind").value === "ladder" ? "" : "hidden"}"><label>💡 Ұстаз кеңесі <span class="muted">(міндетті емес)</span></label><input class="qh" placeholder="Оқушы «кеңес» көмегін алғанда көрінеді"></div>`;
   $("ntQs").appendChild(div); renumber();
+}
+function ntKindChanged(){
+  const lad = $("ntKind").value === "ladder";
+  document.querySelectorAll("#ntQs .qhwrap").forEach(d => d.classList.toggle("hidden", !lad));
+  $("ntKindInfo").textContent = lad
+    ? "Сұрақтарды ЖЕҢІЛДЕН ҚИЫНҒА қарай орналастырыңыз. Оқушы әр сұраққа 30 секунд алады, 3 көмегі бар, қателессе ойын бітеді."
+    : "Оқушы барлық сұраққа бір бетте жауап беріп, бағасын алады.";
 }
 function renumber(){ document.querySelectorAll("#ntQs .qedit .qnum").forEach((b,i) => b.textContent = `${i+1}-сұрақ`); }
 
@@ -479,7 +743,8 @@ async function saveTest(){
   if (!title) return $("ntErr").textContent = "Тест атауын жазыңыз.";
   const blocks = [...document.querySelectorAll("#ntQs .qedit")];
   if (!blocks.length) return $("ntErr").textContent = "Кемінде бір сұрақ қосыңыз.";
-  const questions = [], answers = [];
+  const kind = $("ntKind").value;
+  const questions = [], answers = [], hints = [];
   for (let i = 0; i < blocks.length; i++){
     const b = blocks[i], q = b.querySelector(".qt").value.trim();
     const raw = [...b.querySelectorAll(".ot")].map(x => x.value.trim());
@@ -490,12 +755,15 @@ async function saveTest(){
     if (opts.length < 2) return $("ntErr").textContent = `${i+1}-сұраққа кемінде 2 нұсқа жазыңыз.`;
     if (!checked || map[+checked.value] === undefined) return $("ntErr").textContent = `${i+1}-сұрақтың дұрыс жауабын белгілеңіз.`;
     questions.push({ q, options: opts }); answers.push(map[+checked.value]);
+    hints.push(b.querySelector(".qh") ? b.querySelector(".qh").value.trim() : "");
   }
+  if (kind === "ladder" && (questions.length < 5 || questions.length > 15))
+    return $("ntErr").textContent = `Білгір баспалдағында 5–15 сұрақ болуы керек (қазір ${questions.length}).`;
   $("btnSave").disabled = true;
-  const { error } = await sb.rpc("save_test", { p_title: title, p_questions: questions, p_answers: answers });
+  const { error } = await sb.rpc("save_test", { p_title: title, p_questions: questions, p_answers: answers, p_kind: kind, p_hints: kind === "ladder" ? hints : null });
   $("btnSave").disabled = false;
   if (error) return $("ntErr").textContent = errText(error);
-  $("ntOk").textContent = "✅ Тест сақталды! Оқушыларға бірден көрінеді.";
+  $("ntOk").textContent = kind === "ladder" ? "✅ Ойын сақталды! Оқушыларға бірден көрінеді." : "✅ Тест сақталды! Оқушыларға бірден көрінеді.";
   $("ntTitle").value = ""; $("ntQs").innerHTML = ""; addQ();
   loadTeacher();
 }
