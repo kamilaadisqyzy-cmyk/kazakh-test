@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="kk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Қазақ тілі — онлайн тест</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root{--bg:#f4f6fb;--card:#fff;--ink:#1d2433;--muted:#6b7385;--pri:#0f6cbd;--pri2:#0b5394;--ok:#1f8a4c;--bad:#c0392b;--line:#e3e7ef}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink);line-height:1.5}
+  header{background:linear-gradient(120deg,#0f6cbd,#17a2b8);color:#fff;padding:16px 20px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+  header h1{margin:0;font-size:21px}
+  header .who{font-size:14px;display:flex;gap:10px;align-items:center}
+  header .who button{margin:0;background:rgba(255,255,255,.2);padding:6px 12px;font-size:14px}
+  main{max-width:920px;margin:24px auto;padding:0 16px}
+  .card{background:var(--card);border-radius:14px;box-shadow:0 2px 10px rgba(20,30,60,.07);padding:22px;margin-bottom:18px}
+  h2{margin-top:0}
+  label{display:block;font-weight:600;margin:12px 0 4px}
+  input,select{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:9px;font-size:16px;background:#fff;font-family:inherit}
+  button{background:var(--pri);color:#fff;border:0;border-radius:9px;padding:10px 18px;font-size:15px;cursor:pointer;margin-top:14px;font-family:inherit}
+  button:hover{background:var(--pri2)}
+  button.ghost{background:#eef2f8;color:var(--ink)}
+  button.danger{background:#fdecea;color:var(--bad)}
+  button.sm{padding:5px 10px;font-size:13px;margin:0}
+  button:disabled{opacity:.6;cursor:wait}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .tabs{display:flex;gap:6px;margin-bottom:16px;border-bottom:2px solid var(--line)}
+  .tab{padding:10px 16px;cursor:pointer;font-weight:600;color:var(--muted);border-bottom:3px solid transparent;margin-bottom:-2px}
+  .tab.on{color:var(--pri);border-color:var(--pri)}
+  .q{border-top:1px solid var(--line);padding:16px 0}
+  .q:first-child{border-top:0}
+  .q h3{margin:0 0 8px;font-size:17px}
+  .opt{display:flex;gap:10px;align-items:center;padding:8px 10px;border-radius:8px;cursor:pointer;font-weight:400;margin:4px 0;border:1px solid transparent}
+  .opt:hover{background:#f3f6fb}
+  .opt input{width:auto}
+  .opt.correct{background:#e7f6ed;border-color:#b6e2c6}
+  .opt.wrong{background:#fdecea;border-color:#f3c0ba}
+  .big{font-size:40px;font-weight:700;margin:6px 0}
+  .muted{color:var(--muted);font-size:14px}
+  .err{color:var(--bad);margin-top:8px;min-height:1em}
+  .okmsg{color:var(--ok);margin-top:8px}
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:14px 0}
+  .stat{background:#f3f6fb;border-radius:10px;padding:12px}
+  .stat b{display:block;font-size:24px}
+  table{width:100%;border-collapse:collapse;font-size:15px}
+  th,td{padding:9px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}
+  th{background:#f3f6fb;position:sticky;top:0}
+  tr.click{cursor:pointer}
+  tr.click:hover td{background:#f8fafd}
+  .pill{display:inline-block;padding:2px 9px;border-radius:20px;font-weight:600;font-size:13px}
+  .p5{background:#e7f6ed;color:var(--ok)} .p4{background:#e8f1fb;color:var(--pri)} .p3{background:#fff4dc;color:#a86b00} .p2{background:#fdecea;color:var(--bad)}
+  .tablewrap{overflow:auto;max-height:540px}
+  .testcard{border:1px solid var(--line);border-radius:12px;padding:16px;margin:10px 0;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+  .testcard h3{margin:0 0 4px;font-size:17px}
+  .warn{background:#fff4dc;border:1px solid #f1d28a;padding:12px 16px;border-radius:10px}
+  .qedit{border:1px solid var(--line);border-radius:12px;padding:14px;margin:12px 0;background:#fafbfd}
+  .qedit .o{display:flex;gap:8px;align-items:center;margin:6px 0}
+  .qedit .o input[type=radio]{width:auto}
+  .hidden{display:none !important}
+</style>
+</head>
+<body>
+<header>
+  <h1>📘 Қазақ тілі — онлайн тест</h1>
+  <div class="who hidden" id="who"><span id="whoName"></span><button onclick="logout()">Шығу</button></div>
+</header>
+
+<main>
+  <div id="cfgWarn" class="warn hidden">
+    ⚠️ Сайт әлі базаға қосылмаған. <code>index.html</code> ішіндегі <code>SUPABASE_URL</code> мен <code>SUPABASE_KEY</code> жолдарын толтырыңыз (README-ді қараңыз).
+  </div>
+
+  <!-- ============ КІРУ / ТІРКЕЛУ ============ -->
+  <section id="scrAuth" class="card hidden">
+    <div class="tabs">
+      <div class="tab on" id="tabLogin" onclick="authTab('login')">Кіру</div>
+      <div class="tab" id="tabReg" onclick="authTab('reg')">Оқушы тіркелуі</div>
+    </div>
+
+    <div id="paneLogin">
+      <label>Логин</label>
+      <input id="lgLogin" autocomplete="username" placeholder="мысалы: aigerim5a">
+      <label>Құпиясөз</label>
+      <input id="lgPass" type="password" autocomplete="current-password" onkeydown="if(event.key==='Enter')login()">
+      <div class="err" id="lgErr"></div>
+      <button id="btnLogin" onclick="login()">Кіру</button>
+      <p class="muted">Оқушы да, мұғалім де осы жерден кіреді. Жүйе кімнің кіргенін өзі анықтайды.</p>
+    </div>
+
+    <div id="paneReg" class="hidden">
+      <label>Аты-жөні</label>
+      <input id="rgName" placeholder="Әлиева Айгерім">
+      <label>Сынып</label>
+      <select id="rgClass"></select>
+      <label>Логин (латын әріптері мен сандар)</label>
+      <input id="rgLogin" autocomplete="username" placeholder="aigerim5a">
+      <label>Құпиясөз (кемінде 6 таңба)</label>
+      <input id="rgPass" type="password" autocomplete="new-password">
+      <div class="err" id="rgErr"></div>
+      <button id="btnReg" onclick="register()">Тіркелу</button>
+    </div>
+  </section>
+
+  <!-- ============ ОҚУШЫ: тесттер тізімі ============ -->
+  <section id="scrStudent" class="card hidden">
+    <h2>Менің тесттерім</h2>
+    <div id="stList"></div>
+  </section>
+
+  <!-- ============ ОҚУШЫ: тест ============ -->
+  <section id="scrTest" class="card hidden">
+    <h2 id="testTitle"></h2>
+    <p class="muted" id="testInfo"></p>
+    <form id="testForm" onsubmit="return false"></form>
+    <div class="err" id="testErr"></div>
+    <div class="row">
+      <button class="ghost" onclick="studentHome()">← Артқа</button>
+      <button id="btnSubmit" onclick="submitTest()">Жауапты жіберу ✓</button>
+    </div>
+  </section>
+
+  <!-- ============ ОҚУШЫ: нәтиже ============ -->
+  <section id="scrDone" class="card hidden">
+    <h2>Нәтижеңіз</h2>
+    <div class="big" id="doneScore"></div>
+    <p id="doneMsg"></p>
+    <div id="doneReview"></div>
+    <button onclick="studentHome()">Тесттер тізіміне</button>
+  </section>
+
+  <!-- ============ МҰҒАЛІМ ============ -->
+  <section id="scrTeacher" class="card hidden">
+    <div class="tabs">
+      <div class="tab on" id="tTabRes" onclick="teacherTab('res')">📊 Нәтижелер</div>
+      <div class="tab" id="tTabTests" onclick="teacherTab('tests')">📝 Тесттер</div>
+      <div class="tab" id="tTabNew" onclick="teacherTab('new')">➕ Жаңа тест</div>
+    </div>
+
+    <!-- Нәтижелер -->
+    <div id="paneRes">
+      <div class="row">
+        <div style="flex:1;min-width:130px"><label>Сынып</label><select id="fClass" onchange="renderResults()"></select></div>
+        <div style="flex:2;min-width:160px"><label>Тест</label><select id="fTest" onchange="renderResults()"></select></div>
+        <div style="flex:2;min-width:160px"><label>Іздеу</label><input id="fName" oninput="renderResults()" placeholder="Оқушының аты..."></div>
+      </div>
+      <div class="row">
+        <button class="ghost" onclick="loadTeacher()">🔄 Жаңарту</button>
+        <button class="ghost" onclick="downloadCSV()">⬇️ Excel-ге жүктеу</button>
+      </div>
+      <div class="stats" id="stats"></div>
+      <div class="tablewrap"><table id="tbl"></table></div>
+      <p class="muted">Жолды бассаңыз — оқушының әр сұраққа берген жауабы ашылады.</p>
+      <div id="detail"></div>
+    </div>
+
+    <!-- Тесттер -->
+    <div id="paneTests" class="hidden"><div id="testsList"></div></div>
+
+    <!-- Жаңа тест -->
+    <div id="paneNew" class="hidden">
+      <label>Тест атауы</label>
+      <input id="ntTitle" placeholder="Мысалы: 6-сынып. Сөз таптары">
+      <div id="ntQs"></div>
+      <div class="row">
+        <button class="ghost" onclick="addQ()">+ Сұрақ қосу</button>
+        <button id="btnSave" onclick="saveTest()">💾 Тестті сақтау</button>
+      </div>
+      <div class="err" id="ntErr"></div>
+      <div class="okmsg" id="ntOk"></div>
+    </div>
+  </section>
+</main>
+
+<script>
+/* ======================= БАПТАУЛАР ======================= */
+// Supabase → Project Settings → API (немесе Connect) бөлімінен көшіріңіз:
+const SUPABASE_URL = "https://riimwvbpvajnrfmdnzhg.supabase.co";
+const SUPABASE_KEY = "sb_publishable_nfyBNQEACXV5Tcw3ivCmjQ_O6AkODoi"; // publishable кілт (ашық болуы қалыпты)
+
+const CLASSES = ["5 А","5 Ә","5 Б","6 А","6 Ә","6 Б","7 А","7 Ә","7 Б","8 А","8 Ә","8 Б"];
+const EMAIL_DOMAIN = "kaztest.app"; // ішкі техникалық домен, өзгертпеңіз
+/* ========================================================= */
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const grade = p => p >= 85 ? 5 : p >= 65 ? 4 : p >= 40 ? 3 : 2;
+const fmtDate = d => new Date(d).toLocaleString("ru-RU", {day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"});
+const loginToEmail = l => l.trim().toLowerCase() + "@" + EMAIL_DOMAIN;
+
+function show(id){
+  document.querySelectorAll("main > section").forEach(s => s.classList.add("hidden"));
+  $(id).classList.remove("hidden");
+  window.scrollTo(0,0);
+}
+
+function errText(e){
+  const m = (e && (e.message || e.error_description)) || String(e);
+  if (/Invalid login credentials/i.test(m)) return "Логин немесе құпиясөз қате.";
+  if (/already registered|already exists/i.test(m)) return "Бұл логин бос емес, басқасын таңдаңыз.";
+  if (/Password should be/i.test(m)) return "Құпиясөз кемінде 6 таңба болуы керек.";
+  if (/Email not confirmed/i.test(m)) return "Supabase-те «Confirm email» баптауын өшіру керек (README-ді қараңыз).";
+  if (/Failed to fetch|NetworkError/i.test(m)) return "Интернет байланысын тексеріңіз.";
+  return m;
+}
+
+let sb = null, me = null, tests = [], myResults = [], current = null;
+let tRows = [], tTests = [], tKeys = {};
+
+/* ======================= ІСКЕ ҚОСУ ======================= */
+(async function init(){
+  $("rgClass").innerHTML = CLASSES.map(c => `<option>${esc(c)}</option>`).join("");
+  if (!SUPABASE_URL || !SUPABASE_KEY){ $("cfgWarn").classList.remove("hidden"); return; }
+  sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) await afterLogin(); else show("scrAuth");
+})();
+
+function authTab(t){
+  $("tabLogin").classList.toggle("on", t === "login");
+  $("tabReg").classList.toggle("on", t === "reg");
+  $("paneLogin").classList.toggle("hidden", t !== "login");
+  $("paneReg").classList.toggle("hidden", t !== "reg");
+}
+
+async function login(){
+  const l = $("lgLogin").value, p = $("lgPass").value;
+  $("lgErr").textContent = "";
+  if (!l || !p){ $("lgErr").textContent = "Логин мен құпиясөзді жазыңыз."; return; }
+  $("btnLogin").disabled = true;
+  const { error } = await sb.auth.signInWithPassword({ email: loginToEmail(l), password: p });
+  $("btnLogin").disabled = false;
+  if (error){ $("lgErr").textContent = errText(error); return; }
+  await afterLogin();
+}
+
+async function register(){
+  const name = $("rgName").value.trim(), cls = $("rgClass").value;
+  const l = $("rgLogin").value.trim().toLowerCase(), p = $("rgPass").value;
+  $("rgErr").textContent = "";
+  if (name.length < 3) return $("rgErr").textContent = "Аты-жөніңізді толық жазыңыз.";
+  if (!/^[a-z0-9._-]{3,30}$/.test(l)) return $("rgErr").textContent = "Логин тек латын әріптері, сандар, нүкте немесе сызықшадан тұрсын (3–30 таңба).";
+  if (p.length < 6) return $("rgErr").textContent = "Құпиясөз кемінде 6 таңба болуы керек.";
+  $("btnReg").disabled = true;
+  const { data, error } = await sb.auth.signUp({
+    email: loginToEmail(l), password: p,
+    options: { data: { full_name: name, class: cls } }
+  });
+  $("btnReg").disabled = false;
+  if (error) return $("rgErr").textContent = errText(error);
+  if (!data.session) return $("rgErr").textContent = "Тіркелдіңіз, бірақ кіру мүмкін емес: Supabase-те «Confirm email» өшірілмеген.";
+  await afterLogin();
+}
+
+async function logout(){
+  await sb.auth.signOut();
+  location.reload();
+}
+
+async function afterLogin(){
+  const { data: { user } } = await sb.auth.getUser();
+  if (!user){ show("scrAuth"); return; }
+  const { data, error } = await sb.from("profiles").select("*").eq("id", user.id).single();
+  if (error){ alert("Профиль табылмады: " + errText(error)); await sb.auth.signOut(); show("scrAuth"); return; }
+  me = data;
+  $("who").classList.remove("hidden");
+  $("whoName").textContent = (me.role === "teacher" ? "👩‍🏫 " : "🎒 ") + me.full_name + (me.role === "student" ? " · " + me.class : "");
+  if (me.role === "teacher"){ show("scrTeacher"); loadTeacher(); if (!$("ntQs").children.length) addQ(); }
+  else studentHome();
+}
+
+/* ======================= ОҚУШЫ ======================= */
+async function studentHome(){
+  show("scrStudent");
+  $("stList").innerHTML = `<p class="muted">Жүктелуде...</p>`;
+  const [t, r] = await Promise.all([
+    sb.from("tests").select("id,title,questions").eq("active", true).order("id"),
+    sb.from("results").select("test_id,score,total,percent,created_at").eq("user_id", me.id)
+  ]);
+  if (t.error || r.error){ $("stList").innerHTML = `<p class="err">${esc(errText(t.error || r.error))}</p>`; return; }
+  tests = t.data; myResults = r.data;
+  if (!tests.length){ $("stList").innerHTML = `<p class="muted">Әзірге ашық тест жоқ.</p>`; return; }
+  $("stList").innerHTML = tests.map(ts => {
+    const res = myResults.find(x => x.test_id === ts.id);
+    return `<div class="testcard">
+      <div><h3>${esc(ts.title)}</h3><span class="muted">${ts.questions.length} сұрақ</span></div>
+      ${res
+        ? `<div>Тапсырылды: <b>${res.score}/${res.total}</b> (${res.percent}%) <span class="pill p${grade(res.percent)}">${grade(res.percent)}</span><br><span class="muted">${fmtDate(res.created_at)}</span></div>`
+        : `<button class="sm" style="padding:9px 16px" onclick="startTest(${ts.id})">Бастау →</button>`}
+    </div>`;
+  }).join("");
+}
+
+function startTest(id){
+  current = tests.find(t => t.id === id);
+  $("testTitle").textContent = current.title;
+  $("testInfo").textContent = `${current.questions.length} сұрақ · Тестті тек бір рет тапсыруға болады`;
+  $("testErr").textContent = "";
+  $("btnSubmit").disabled = false; $("btnSubmit").textContent = "Жауапты жіберу ✓";
+  $("testForm").innerHTML = current.questions.map((q,i) => `
+    <div class="q"><h3>${i+1}. ${esc(q.q)}</h3>
+      ${q.options.map((o,j) => `<label class="opt"><input type="radio" name="q${i}" value="${j}"> ${esc(o)}</label>`).join("")}
+    </div>`).join("");
+  show("scrTest");
+}
+
+async function submitTest(){
+  const qs = current.questions;
+  const answers = qs.map((_,i) => { const el = $("testForm").querySelector(`input[name=q${i}]:checked`); return el ? +el.value : null; });
+  const missing = answers.map((a,i) => a === null ? i+1 : null).filter(Boolean);
+  if (missing.length){ $("testErr").textContent = "Жауап берілмеген сұрақтар: " + missing.join(", "); return; }
+  $("testErr").textContent = "";
+  $("btnSubmit").disabled = true; $("btnSubmit").textContent = "Жіберілуде...";
+  const { data, error } = await sb.rpc("submit_result", { p_test_id: current.id, p_answers: answers });
+  if (error){
+    $("btnSubmit").disabled = false; $("btnSubmit").textContent = "Жауапты жіберу ✓";
+    $("testErr").textContent = errText(error);
+    return;
+  }
+  $("doneScore").textContent = `${data.score} / ${data.total}  (${data.percent}%)`;
+  $("doneMsg").innerHTML = `Бағаңыз: <span class="pill p${grade(data.percent)}">${grade(data.percent)}</span> — нәтижеңіз мұғалімге жіберілді ✅`;
+  $("doneReview").innerHTML = reviewHTML(current.questions, answers, data.key);
+  show("scrDone");
+}
+
+function reviewHTML(questions, answers, key){
+  return questions.map((q,i) => `
+    <div class="q"><h3>${i+1}. ${esc(q.q)} ${answers[i] === key[i] ? "✅" : "❌"}</h3>
+      ${q.options.map((o,j) => {
+        const cls = j === key[i] ? "correct" : (j === answers[i] ? "wrong" : "");
+        return `<div class="opt ${cls}">${j === answers[i] ? "●" : "○"} ${esc(o)}</div>`;
+      }).join("")}
+    </div>`).join("");
+}
+
+/* ======================= МҰҒАЛІМ ======================= */
+function teacherTab(t){
+  [["res","tTabRes","paneRes"],["tests","tTabTests","paneTests"],["new","tTabNew","paneNew"]].forEach(([k,tab,pane]) => {
+    $(tab).classList.toggle("on", k === t);
+    $(pane).classList.toggle("hidden", k !== t);
+  });
+}
+
+async function loadTeacher(){
+  $("tbl").innerHTML = `<tr><td class="muted">Жүктелуде...</td></tr>`;
+  const [r, t, k] = await Promise.all([
+    sb.from("results").select("id,score,total,percent,answers,created_at,test_id,user_id,profiles(full_name,class,login)").order("created_at", { ascending: false }),
+    sb.from("tests").select("*").order("id"),
+    sb.from("test_keys").select("*")
+  ]);
+  const err = r.error || t.error || k.error;
+  if (err){ $("tbl").innerHTML = `<tr><td class="err">${esc(errText(err))}</td></tr>`; return; }
+  tTests = t.data;
+  tKeys = Object.fromEntries(k.data.map(x => [x.test_id, x.answers]));
+  tRows = r.data.map(x => ({ ...x, name: x.profiles?.full_name || "?", cls: x.profiles?.class || "", login: x.profiles?.login || "",
+                             testTitle: (tTests.find(tt => tt.id === x.test_id) || {}).title || "?" }));
+  const uniq = a => [...new Set(a)].filter(Boolean).sort((a,b) => a.localeCompare(b, "kk"));
+  const keepC = $("fClass").value, keepT = $("fTest").value;
+  $("fClass").innerHTML = `<option value="">Барлығы</option>` + uniq(tRows.map(x => x.cls)).map(c => `<option>${esc(c)}</option>`).join("");
+  $("fTest").innerHTML  = `<option value="">Барлығы</option>` + tTests.map(x => `<option value="${x.id}">${esc(x.title)}</option>`).join("");
+  $("fClass").value = keepC; $("fTest").value = keepT;
+  renderResults(); renderTests();
+}
+
+function filtered(){
+  const c = $("fClass").value, t = $("fTest").value, n = $("fName").value.trim().toLowerCase();
+  return tRows.filter(x => (!c || x.cls === c) && (!t || String(x.test_id) === t) && (!n || x.name.toLowerCase().includes(n)));
+}
+
+function renderResults(){
+  const rows = filtered();
+  $("detail").innerHTML = "";
+  const avg = rows.length ? Math.round(rows.reduce((s,x) => s + x.percent, 0) / rows.length) : 0;
+  const cnt = g => rows.filter(x => grade(x.percent) === g).length;
+  $("stats").innerHTML = `
+    <div class="stat"><span class="muted">Тапсырғандар</span><b>${rows.length}</b></div>
+    <div class="stat"><span class="muted">Орташа нәтиже</span><b>${avg}%</b></div>
+    <div class="stat"><span class="muted">«5» / «4»</span><b>${cnt(5)} / ${cnt(4)}</b></div>
+    <div class="stat"><span class="muted">«3» / «2»</span><b>${cnt(3)} / ${cnt(2)}</b></div>`;
+  $("tbl").innerHTML = `<tr><th>#</th><th>Аты-жөні</th><th>Сынып</th><th>Тест</th><th>Ұпай</th><th>Баға</th><th>Күні</th></tr>` +
+    (rows.length ? rows.map((x,i) => `
+      <tr class="click" onclick="showDetail(${x.id})">
+        <td>${i+1}</td><td>${esc(x.name)}</td><td>${esc(x.cls)}</td><td>${esc(x.testTitle)}</td>
+        <td>${x.score}/${x.total} (${x.percent}%)</td>
+        <td><span class="pill p${grade(x.percent)}">${grade(x.percent)}</span></td>
+        <td>${fmtDate(x.created_at)}</td>
+      </tr>`).join("") : `<tr><td colspan="7" class="muted">Нәтиже жоқ</td></tr>`);
+}
+
+function showDetail(id){
+  const x = tRows.find(r => r.id === id), t = tTests.find(tt => tt.id === x.test_id), key = tKeys[x.test_id];
+  $("detail").innerHTML = `<div class="card" style="box-shadow:none;border:1px solid var(--line);margin-top:14px">
+    <div class="row" style="justify-content:space-between">
+      <h3 style="margin:0">${esc(x.name)} · ${esc(x.cls)} · логин: ${esc(x.login)} · ${x.score}/${x.total}</h3>
+      <button class="sm danger" onclick="deleteResult(${x.id})">🔁 Қайта тапсыруға рұқсат беру</button>
+    </div>
+    ${t && key ? reviewHTML(t.questions, x.answers, key) : '<p class="muted">Тест табылмады.</p>'}</div>`;
+  $("detail").scrollIntoView({ behavior: "smooth" });
+}
+
+async function deleteResult(id){
+  if (!confirm("Бұл нәтиже өшіріледі, оқушы тестті қайта тапсыра алады. Жалғастырасыз ба?")) return;
+  const { error } = await sb.from("results").delete().eq("id", id);
+  if (error) return alert(errText(error));
+  loadTeacher();
+}
+
+function downloadCSV(){
+  const rows = filtered();
+  const head = ["Аты-жөні","Сынып","Логин","Тест","Ұпай","Барлығы","Пайыз","Баға","Күні"];
+  const q = v => `"${String(v ?? "").replace(/"/g,'""')}"`;
+  const csv = [head, ...rows.map(x => [x.name, x.cls, x.login, x.testTitle, x.score, x.total, x.percent, grade(x.percent), fmtDate(x.created_at)])]
+    .map(line => line.map(q).join(";")).join("\r\n");
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" }));
+  a.download = "natizheler.csv"; a.click();
+}
+
+/* ---------- Тесттер тізімі ---------- */
+function renderTests(){
+  $("testsList").innerHTML = tTests.length ? tTests.map(t => {
+    const n = tRows.filter(r => r.test_id === t.id).length;
+    return `<div class="testcard">
+      <div><h3>${esc(t.title)}</h3><span class="muted">${t.questions.length} сұрақ · ${n} оқушы тапсырды · ${t.active ? "🟢 Ашық" : "⚪ Жабық"}</span></div>
+      <div class="row">
+        <button class="sm ghost" onclick="toggleTest(${t.id}, ${!t.active})">${t.active ? "Жабу" : "Ашу"}</button>
+        <button class="sm danger" onclick="deleteTest(${t.id})">Өшіру</button>
+      </div>
+    </div>`;
+  }).join("") : `<p class="muted">Тест жоқ. «Жаңа тест» бөлімінен қосыңыз.</p>`;
+}
+
+async function toggleTest(id, active){
+  const { error } = await sb.from("tests").update({ active }).eq("id", id);
+  if (error) return alert(errText(error));
+  loadTeacher();
+}
+
+async function deleteTest(id){
+  if (!confirm("Тест және оның БАРЛЫҚ нәтижелері өшіріледі. Сенімдісіз бе?")) return;
+  const { error } = await sb.from("tests").delete().eq("id", id);
+  if (error) return alert(errText(error));
+  loadTeacher();
+}
+
+/* ---------- Жаңа тест құру ---------- */
+let qCounter = 0;
+function addQ(){
+  const id = ++qCounter;
+  const div = document.createElement("div");
+  div.className = "qedit"; div.dataset.id = id;
+  div.innerHTML = `
+    <div class="row" style="justify-content:space-between"><b class="qnum"></b>
+      <button class="sm danger" onclick="this.closest('.qedit').remove();renumber()">✕ Өшіру</button></div>
+    <label>Сұрақ</label><input class="qt" placeholder="Сұрақ мәтіні">
+    <label>Жауап нұсқалары <span class="muted">(дұрысын белгілеңіз ●)</span></label>
+    ${[0,1,2,3].map(j => `<div class="o"><input type="radio" name="c${id}" value="${j}"><input class="ot" placeholder="${j+1}-нұсқа"></div>`).join("")}`;
+  $("ntQs").appendChild(div); renumber();
+}
+function renumber(){ document.querySelectorAll("#ntQs .qedit .qnum").forEach((b,i) => b.textContent = `${i+1}-сұрақ`); }
+
+async function saveTest(){
+  $("ntErr").textContent = ""; $("ntOk").textContent = "";
+  const title = $("ntTitle").value.trim();
+  if (!title) return $("ntErr").textContent = "Тест атауын жазыңыз.";
+  const blocks = [...document.querySelectorAll("#ntQs .qedit")];
+  if (!blocks.length) return $("ntErr").textContent = "Кемінде бір сұрақ қосыңыз.";
+  const questions = [], answers = [];
+  for (let i = 0; i < blocks.length; i++){
+    const b = blocks[i], q = b.querySelector(".qt").value.trim();
+    const raw = [...b.querySelectorAll(".ot")].map(x => x.value.trim());
+    const checked = b.querySelector("input[type=radio]:checked");
+    if (!q) return $("ntErr").textContent = `${i+1}-сұрақтың мәтіні жоқ.`;
+    const opts = [], map = {};
+    raw.forEach((o,j) => { if (o){ map[j] = opts.length; opts.push(o); } });
+    if (opts.length < 2) return $("ntErr").textContent = `${i+1}-сұраққа кемінде 2 нұсқа жазыңыз.`;
+    if (!checked || map[+checked.value] === undefined) return $("ntErr").textContent = `${i+1}-сұрақтың дұрыс жауабын белгілеңіз.`;
+    questions.push({ q, options: opts }); answers.push(map[+checked.value]);
+  }
+  $("btnSave").disabled = true;
+  const { error } = await sb.rpc("save_test", { p_title: title, p_questions: questions, p_answers: answers });
+  $("btnSave").disabled = false;
+  if (error) return $("ntErr").textContent = errText(error);
+  $("ntOk").textContent = "✅ Тест сақталды! Оқушыларға бірден көрінеді.";
+  $("ntTitle").value = ""; $("ntQs").innerHTML = ""; addQ();
+  loadTeacher();
+}
+</script>
+</body>
+</html>
