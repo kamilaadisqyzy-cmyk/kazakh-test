@@ -93,7 +93,7 @@
       <input id="rgName" placeholder="Әлиева Айгерім">
       <label>Сынып</label>
       <select id="rgClass"></select>
-      <label>Логин (латын әріптері мен сандар)</label>
+      <label>Логин (кез келген әріппен, бос орынсыз)</label>
       <input id="rgLogin" autocomplete="username" placeholder="aigerim5a">
       <label>Құпиясөз (кемінде 6 таңба)</label>
       <input id="rgPass" type="password" autocomplete="new-password">
@@ -186,7 +186,9 @@ const $ = id => document.getElementById(id);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const grade = p => p >= 85 ? 5 : p >= 65 ? 4 : p >= 40 ? 3 : 2;
 const fmtDate = d => new Date(d).toLocaleString("ru-RU", {day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"});
-const loginToEmail = l => l.trim().toLowerCase() + "@" + EMAIL_DOMAIN;
+const normLogin = l => String(l || "").trim().toLowerCase().replace(/\s+/g, "");
+// Логинді (кирилл болса да) email-ге айналдыру: UTF-8 байттарының hex коды
+const loginToEmail = l => "u" + [...new TextEncoder().encode(normLogin(l))].map(b => b.toString(16).padStart(2, "0")).join("") + "@" + EMAIL_DOMAIN;
 
 function show(id){
   document.querySelectorAll("main > section").forEach(s => s.classList.add("hidden"));
@@ -198,6 +200,7 @@ function errText(e){
   const m = (e && (e.message || e.error_description)) || String(e);
   if (/Invalid login credentials/i.test(m)) return "Логин немесе құпиясөз қате.";
   if (/already registered|already exists/i.test(m)) return "Бұл логин бос емес, басқасын таңдаңыз.";
+  if (/rate limit|too many/i.test(m)) return "Тым көп әрекет. Бір минуттан кейін қайталаңыз.";
   if (/Password should be/i.test(m)) return "Құпиясөз кемінде 6 таңба болуы керек.";
   if (/Email not confirmed/i.test(m)) return "Supabase-те «Confirm email» баптауын өшіру керек (README-ді қараңыз).";
   if (/Failed to fetch|NetworkError/i.test(m)) return "Интернет байланысын тексеріңіз.";
@@ -211,6 +214,10 @@ let tRows = [], tTests = [], tKeys = {};
 (async function init(){
   $("rgClass").innerHTML = CLASSES.map(c => `<option>${esc(c)}</option>`).join("");
   if (!SUPABASE_URL || !SUPABASE_KEY){ $("cfgWarn").classList.remove("hidden"); return; }
+  if (!window.supabase){
+    $("cfgWarn").innerHTML = "⚠️ Сайттың кітапханасы жүктелмеді. Интернетті тексеріп, бетті жаңартыңыз (F5).";
+    $("cfgWarn").classList.remove("hidden"); return;
+  }
   sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
   const { data: { session } } = await sb.auth.getSession();
   if (session) await afterLogin(); else show("scrAuth");
@@ -227,26 +234,33 @@ async function login(){
   const l = $("lgLogin").value, p = $("lgPass").value;
   $("lgErr").textContent = "";
   if (!l || !p){ $("lgErr").textContent = "Логин мен құпиясөзді жазыңыз."; return; }
-  $("btnLogin").disabled = true;
-  const { error } = await sb.auth.signInWithPassword({ email: loginToEmail(l), password: p });
-  $("btnLogin").disabled = false;
+  if (!sb){ $("lgErr").textContent = "Сайт базаға қосылмады. Бетті жаңартыңыз (F5)."; return; }
+  $("btnLogin").disabled = true; $("btnLogin").textContent = "Кіруде...";
+  let error;
+  try { ({ error } = await sb.auth.signInWithPassword({ email: loginToEmail(l), password: p })); }
+  catch(e){ error = e; }
+  $("btnLogin").disabled = false; $("btnLogin").textContent = "Кіру";
   if (error){ $("lgErr").textContent = errText(error); return; }
   await afterLogin();
 }
 
 async function register(){
   const name = $("rgName").value.trim(), cls = $("rgClass").value;
-  const l = $("rgLogin").value.trim().toLowerCase(), p = $("rgPass").value;
+  const l = normLogin($("rgLogin").value), p = $("rgPass").value;
   $("rgErr").textContent = "";
   if (name.length < 3) return $("rgErr").textContent = "Аты-жөніңізді толық жазыңыз.";
-  if (!/^[a-z0-9._-]{3,30}$/.test(l)) return $("rgErr").textContent = "Логин тек латын әріптері, сандар, нүкте немесе сызықшадан тұрсын (3–30 таңба).";
+  if (l.length < 3 || l.length > 15) return $("rgErr").textContent = "Логин 3–15 таңбадан тұрсын (бос орынсыз).";
   if (p.length < 6) return $("rgErr").textContent = "Құпиясөз кемінде 6 таңба болуы керек.";
-  $("btnReg").disabled = true;
-  const { data, error } = await sb.auth.signUp({
-    email: loginToEmail(l), password: p,
-    options: { data: { full_name: name, class: cls } }
-  });
-  $("btnReg").disabled = false;
+  if (!sb) return $("rgErr").textContent = "Сайт базаға қосылмады. Бетті жаңартыңыз (F5).";
+  $("btnReg").disabled = true; $("btnReg").textContent = "Тіркелуде...";
+  let data = {}, error;
+  try {
+    ({ data, error } = await sb.auth.signUp({
+      email: loginToEmail(l), password: p,
+      options: { data: { full_name: name, class: cls, login: l } }
+    }));
+  } catch(e){ error = e; }
+  $("btnReg").disabled = false; $("btnReg").textContent = "Тіркелу";
   if (error) return $("rgErr").textContent = errText(error);
   if (!data.session) return $("rgErr").textContent = "Тіркелдіңіз, бірақ кіру мүмкін емес: Supabase-те «Confirm email» өшірілмеген.";
   await afterLogin();

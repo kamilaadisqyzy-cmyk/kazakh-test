@@ -20,7 +20,7 @@ begin
   insert into public.profiles (id, login, full_name, class)
   values (
     new.id,
-    split_part(new.email, '@', 1),
+    coalesce(nullif(left(new.raw_user_meta_data->>'login', 30), ''), split_part(new.email, '@', 1)),
     coalesce(left(new.raw_user_meta_data->>'full_name', 100), ''),
     coalesce(left(new.raw_user_meta_data->>'class', 20), '')
   );
@@ -180,5 +180,5 @@ end $$;
 --  МҰҒАЛІМ ЖАСАУ: сайтта әдеттегідей тіркеліп болған соң, мына жолды
 --  логиніңізді қойып, жеке іске қосыңыз:
 --
---  update public.profiles set role = 'teacher' where login = 'mugalim';
+--  update public.profiles set role = 'teacher' where login = 'mugalim';  -- логин кіші әріппен
 -- =====================================================================
